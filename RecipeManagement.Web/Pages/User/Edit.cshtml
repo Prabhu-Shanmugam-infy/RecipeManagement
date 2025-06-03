@@ -1,0 +1,72 @@
+﻿@page
+@model RecipeManagement.Web.Pages.User.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+    
+}
+
+<h1>Edit</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="UserModel.Id" />
+            <input type="hidden" asp-for="UserModel.Password" />
+            <input type="hidden" asp-for="UserModel.ProfilePicture" />
+            <div class="form-group">
+                <label asp-for="UserModel.UserName" class="control-label"></label>
+                <input asp-for="UserModel.UserName" class="form-control" />
+                <span asp-validation-for="UserModel.UserName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="UserModel.Email" class="control-label"></label>
+                <input asp-for="UserModel.Email" class="form-control" />
+                <span asp-validation-for="UserModel.Email" class="text-danger"></span>
+            </div>           
+            <div class="form-group">
+                <label asp-for="UserModel.Bio" class="control-label"></label>
+                <textarea asp-for="UserModel.Bio" class="form-control" ></textarea>
+                <span asp-validation-for="UserModel.Bio" class="text-danger"></span>
+            </div>
+            @{
+                if (this.User.IsInRole("Admin"))
+                {
+                    <div class="form-group">
+                        <label asp-for="UserModel.IsActive" class="form-check-label"></label>
+                        <input asp-for="UserModel.IsActive" type="checkbox" class="form-check-input" />
+                        <span asp-validation-for="UserModel.IsActive" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="UserModel.IsAdmin" class="form-check-label"></label>
+                        <input asp-for="UserModel.IsAdmin" type="checkbox" class="form-check-input" />
+                        <span asp-validation-for="UserModel.IsAdmin" class="text-danger"></span>
+                    </div>
+                }
+                else
+                {
+                    <input type="hidden" asp-for="UserModel.IsActive" />
+                    <input type="hidden" asp-for="UserModel.IsAdmin" />
+                }
+            }
+            <div>
+                <label asp-for="FormFile" class="control-label"></label>
+                <input type="file" asp-for="FormFile"  accept="image/*" />
+                <span asp-validation-for="FormFile" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

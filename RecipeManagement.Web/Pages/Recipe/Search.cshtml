@@ -1,0 +1,21 @@
+﻿@page
+@model RecipeManagement.Web.Pages.Recipe.SearchModel
+
+
+@{
+    ViewData["Title"] = "Search";
+}
+
+<h1>Search </h1>
+<div class="grid-container">
+@foreach (var item in Model.Recipe)
+{
+    <div class="card" style="width: 18rem;border:none;">
+        <img class="card-img-top" src="@Url.Content("/uploads/images/"+ item.RecipeImages[0])" alt="">
+        <div class="card-body">
+            <h5 class="card-title"> <a asp-page="./Details" asp-route-id="@item.Id" class="card-link" style="text-decoration:none">@item.Title</a></h5>
+                <p class="card-text"><a asp-area="" asp-page="/User/Details" asp-route-id="@item.Id" class="card-link" style="text-decoration:none">@item.Author.UserName</a></p>
+        </div>          
+    </div>
+}
+</div>

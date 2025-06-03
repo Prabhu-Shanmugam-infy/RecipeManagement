@@ -1,0 +1,99 @@
+﻿@page
+@model RecipeManagement.Web.Pages.Recipe.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="recipeModel.Id" />
+            <input type="hidden" asp-for="RecipeImages" />
+            <input type="hidden" asp-for="DeletedImages" />
+            <div class="form-group">
+                <label asp-for="recipeModel.Title" class="control-label"></label>
+                <input asp-for="recipeModel.Title" class="form-control" />
+                <span asp-validation-for="recipeModel.Title" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="recipeModel.Ingredients" class="control-label"></label>
+                <input asp-for="recipeModel.Ingredients" class="form-control" />
+                <span asp-validation-for="recipeModel.Ingredients" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="recipeModel.Instructions" class="control-label"></label>
+                <input asp-for="recipeModel.Instructions" class="form-control" />
+                <textarea asp-for="recipeModel.Instructions" class="form-control"></textarea>
+            </div>
+            <div class="form-group">
+                <label asp-for="recipeModel.CookingTimeInMins" class="control-label"></label>
+                <input asp-for="recipeModel.CookingTimeInMins" class="form-control" />
+                <span asp-validation-for="recipeModel.CookingTimeInMins" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="recipeModel.CategoryId" class="control-label"></label>
+                <select asp-for="recipeModel.CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+                <span asp-validation-for="recipeModel.CategoryId" class="text-danger"></span>
+            </div>
+            <div class="form-group">               
+                <label asp-for="recipeModel.Active" class="form-check-label"></label>
+                <input asp-for="recipeModel.Active" type="checkbox" class="form-check-input" />
+                <span asp-validation-for="recipeModel.Active" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="FormFile" class="control-label"></label>
+                <input type="file" asp-for="FormFile" multiple accept="image/*" />
+                <span asp-validation-for="FormFile" class="text-danger"></span>
+            </div>
+
+
+            <div class="mt-2">
+                <table cellspacing="0" cellpadding="0" width="100%" name="imagetable" id="imagetable">
+                    <thead>
+                        <tr>
+                            <td>Image</td>
+                            <td>Action</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.recipeModel.RecipeImages.Count(); i++)
+                        {
+                            <tr>
+                                <td><img src="@Url.Content("/uploads/thumbnail/"+ @Model.recipeModel.RecipeImages[i])" /></td>
+                                <td><button type="button" onclick="return DeleteImage('@Model.recipeModel.RecipeImages[i]', @i+1);">Delete</button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-group mt-2">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function DeleteImage(imagename,rowid){
+            if(confirm ('Are you sure to Delete the item?'))
+            {
+            document.getElementById('imagetable').deleteRow(rowid);
+            document.getElementById('DeletedImages').value = imagename + "," + document.getElementById('DeletedImages').value;
+            }
+            return false;
+        }
+    </script>
+}

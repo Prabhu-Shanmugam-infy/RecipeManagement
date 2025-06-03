@@ -1,0 +1,69 @@
+﻿@page
+@model RecipeManagement.Web.Pages.User.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.UserModel[0].UserName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UserModel[0].Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UserModel[0].ProfilePicture)
+            </th>            
+            <th>
+                @Html.DisplayNameFor(model => model.UserModel[0].IsActive)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UserModel[0].IsAdmin)
+            </th>
+
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.UserModel)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.UserName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Email)
+                </td>
+                <td>
+                    @{
+                        if (!string.IsNullOrEmpty(item.ProfilePicture))
+                        {
+                            <img src="@Url.Content("uploads/thumbnail/"+ item.ProfilePicture)" />
+                        }
+                    }
+                </td>
+                
+                <td>
+                    @Html.DisplayFor(modelItem => item.IsActive)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.IsAdmin)
+                </td>
+
+                <td>
+                    <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

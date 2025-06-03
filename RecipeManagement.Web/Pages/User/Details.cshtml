@@ -1,0 +1,23 @@
+﻿@page
+@model RecipeManagement.Web.Pages.User.DetailsModel
+
+@{
+    ViewData["Title"] = "Details";
+
+}
+
+<div>   
+
+    <div class="container">
+        <div class="card profile-card">
+            <div class="card-body text-center">
+                <img src="@Url.Content("/uploads/images/"+ Model.UserModel.ProfilePicture)" alt="Profile Picture" class="rounded-circle mb-8">
+                <h4 class="card-title">@Model.UserModel.UserName</h4>
+                <p class="card-text text-muted">@Model.UserModel.Bio</p>
+                <p class="card-text">@Model.UserModel.Email</p>
+
+            </div>
+        </div>
+    </div>
+</div>
+

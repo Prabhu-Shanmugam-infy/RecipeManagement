@@ -1,0 +1,84 @@
+﻿@page
+@model RecipeManagement.Web.Pages.Recipe.DetailsModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<div>
+    <h4>@Html.DisplayFor(model => model.Recipe.Title)</h4>
+    <hr />
+    <dl class="row">
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Recipe.Ingredients)
+        </dt>
+        <dd class="col-sm-10">
+
+            @{
+                var ingredients = Model.Recipe.Ingredients.Split(",");
+            }
+
+            @foreach (var ingredient in ingredients)
+            {
+                <ul>
+                    <li>@ingredient</li>
+                </ul>
+            }
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Recipe.Instructions)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Recipe.Instructions)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Recipe.CookingTimeInMins)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Recipe.CookingTimeInMins)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Recipe.Author)
+        </dt>
+        <dd class="col-sm-10">
+            <p class="card-text"><a asp-area="" asp-page="/User/Details" asp-route-id="@Model.Recipe.Author.Id" class="card-link" style="text-decoration:none">@Model.Recipe.Author.UserName</a></p>
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Recipe.Category)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Recipe.Category.Name)
+        </dd>
+    </dl>
+</div>
+
+<div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel" style="width:70%">
+    <div class="carousel-indicators">
+        @foreach (var obj in Model.Recipe.RecipeImages.Select((item, index) => new { item, index }))
+        {
+            <button type="button"  data-bs-target="#carouselExampleIndicators" data-bs-slide-to="@(obj.index)" aria-label="@("Slide " +(obj.index + 1).ToString ())" class='@(obj.index==0?"active":"")'></button>
+        }
+    </div>
+    <div class="carousel-inner">
+        @{
+            Boolean first = true;
+        }
+        @foreach (var item in Model.Recipe.RecipeImages)
+        {
+            <div class="carousel-item @( first ? "active" : "" )">
+                <img class="d-block w-100" src="@Url.Content("/uploads/images/"+ item)" alt="First slide">
+            </div>
+            first = false;
+        }
+
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
