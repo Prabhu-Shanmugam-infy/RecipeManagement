@@ -14,7 +14,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<AuthorizationHandler>();
 builder.Services.AddHttpClient<RecipeManagementService>(httpClient =>
 {
-    httpClient.BaseAddress = new Uri("https://localhost:44309/");
+    httpClient.BaseAddress = new Uri(builder.Configuration["WebApiURL"]);
 
   
 }).AddHttpMessageHandler<AuthorizationHandler>();
