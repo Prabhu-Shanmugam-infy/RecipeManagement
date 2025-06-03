@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using RecipeManagement.Entities;
 using RecipeManagement.Models;
+using System.ComponentModel.DataAnnotations;
+using System.Net;
 
 namespace RecipeManagement.Web.Pages.Recipe
 {
@@ -27,11 +21,11 @@ namespace RecipeManagement.Web.Pages.Recipe
         public RecipeModel recipeModel { get; set; } = default!;
 
         [BindProperty]
-        public string DeletedImages { get; set; }
+        public string? DeletedImages { get; set; }
 
         [Display(Name = "Recipe Images")]
         [BindProperty]
-        public List<IFormFile> FormFile { get; set; }
+        public List<IFormFile>? FormFile { get; set; }
 
 
         [BindProperty]
@@ -54,7 +48,7 @@ namespace RecipeManagement.Web.Pages.Recipe
             {
                 return StatusCode((int)HttpStatusCode.Forbidden);
             }
-            
+
         }
 
         // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -83,11 +77,13 @@ namespace RecipeManagement.Web.Pages.Recipe
 
             recipeModel.RecipeImages = RecipeImages.Split(",").ToList(); ;
             recipeModel.RecipeImages.AddRange(images);
-            foreach (var img in DeletedImages.Split(","))
+            if (!string.IsNullOrEmpty(DeletedImages))
             {
-                recipeModel.RecipeImages.Remove(img);
+                foreach (var img in DeletedImages.Split(","))
+                {
+                    recipeModel.RecipeImages.Remove(img);
+                }
             }
-
             await _service.UpdateRecipeAsync(recipeModel); ;
 
             return RedirectToPage("./Index");

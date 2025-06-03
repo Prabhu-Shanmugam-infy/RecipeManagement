@@ -1,8 +1,7 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Security.Policy;
 
 namespace RecipeManagement.Web.Pages
 {
@@ -10,10 +9,7 @@ namespace RecipeManagement.Web.Pages
     {
         public IActionResult OnGetAsync()
         {
-            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            // RedirectToPage("login");
-            // Response.Redirect("./login");
-            //return new RedirectToPageResult("/Login");
+            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);            
             return Redirect("/");
 
         }
