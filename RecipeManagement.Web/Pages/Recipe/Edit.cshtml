@@ -8,7 +8,7 @@
 <h1>Edit</h1>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-8">
         <form method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="recipeModel.Id" />
@@ -43,9 +43,9 @@
                 <input asp-for="recipeModel.Active" type="checkbox" class="form-check-input" />
                 <span asp-validation-for="recipeModel.Active" class="text-danger"></span>
             </div>
-            <div>
+            <div class="form-group">
                 <label asp-for="FormFile" class="control-label"></label>
-                <input type="file" asp-for="FormFile" multiple accept="image/*" />
+                <input type="file" class="form-control" asp-for="FormFile" multiple accept="image/*" />
                 <span asp-validation-for="FormFile" class="text-danger"></span>
             </div>
 
@@ -63,7 +63,7 @@
                         {
                             <tr>
                                 <td><img src="@Url.Content("/uploads/thumbnail/"+ @Model.recipeModel.RecipeImages[i])" /></td>
-                                <td><button type="button" onclick="return DeleteImage('@Model.recipeModel.RecipeImages[i]', @i+1);">Delete</button></td>
+                                <td><button type="button" class="btn btn-sm btn-secondary" onclick="return DeleteImage('@Model.recipeModel.RecipeImages[i]', @i+1);">Delete</button></td>
                             </tr>
                         }
                     </tbody>
