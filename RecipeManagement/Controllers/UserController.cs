@@ -1,13 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecipeManagement.Contracts;
 using RecipeManagement.Entities;
+using RecipeManagement.Interface;
 using RecipeManagement.Models;
+using RecipeManagement.Repository;
 using System.Net;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RecipeManagement.Controllers
 {
@@ -18,35 +18,37 @@ namespace RecipeManagement.Controllers
         private IConfiguration _config;
         private readonly RecipeContext _context;
         private readonly IMapper _mapper;
+        private readonly IUserRepository _userRepository;
 
-        public UserController(IConfiguration config, RecipeContext context, IMapper mapper)
+        public UserController(IConfiguration config, RecipeContext context, IMapper mapper, IUserRepository userRepository)
         {
             _config = config;
             _context = context;
             _mapper = mapper;
+            _userRepository = userRepository;
         }
 
 
         [HttpGet]
         public async Task<IEnumerable<UserModel>> GetAll()
         {
-            var users = _context.Users.ToList(); ;
-            IEnumerable<UserModel> ilistDest = _mapper.Map<IEnumerable<User>, IEnumerable<UserModel>>(users);
-            return ilistDest;
+            return _userRepository.GetAllUsers();
         }
 
         // GET: api/User/5
         [HttpGet("{id}")]
         public async Task<ActionResult<UserModel>> GetUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = _userRepository.GetUserById(id);
 
             if (user == null)
             {
                 return NotFound();
             }
-            var userModel = _mapper.Map<User, UserModel>(user);
-            return userModel;
+            else
+            {
+                return user;
+            }
         }
 
         // PUT: api/User/5
@@ -58,35 +60,22 @@ namespace RecipeManagement.Controllers
             var userId = int.Parse(User.FindFirst("UserId")?.Value);
             var IsAdmin = User.IsInRole("Admin");
 
-            var user = _context.Users.Find(userModel.Id);
+            var user = _userRepository.GetUserById(userid);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
             if (IsAdmin || user.Id == userId)
             {
-                var oldPassword = user.PasswordHash;
-                _mapper.Map<UserModel, User>(userModel, user);
-
                 if (!IsAdmin)
                 {
-                    user.IsAdmin = 0;
+                    userModel.IsAdmin = false;
                 }
 
-                user.PasswordHash = oldPassword;
-                _context.Entry(user).State = EntityState.Modified;
+                _userRepository.UpdateUser(userModel);
 
-                try
-                {
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!UserExists(userModel.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
                 return userModel;
             }
             else
@@ -99,45 +88,32 @@ namespace RecipeManagement.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<UserModel>> PostUser(UserModel userModel)
+        public ActionResult<UserModel> PostUser(UserModel userModel)
         {
-            var user = _mapper.Map<UserModel, User>(userModel);
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            userModel.Id = user.Id;
-
-            return userModel;
+            return _userRepository.AddUser(userModel);
         }
 
         // DELETE: api/User/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<BaseResponse>> DeleteUser(int id)
+        public ActionResult<BaseResponse> DeleteUser(int id)
         {
             var response = new BaseResponse();
-            var UserEntity = await _context.Users.FindAsync(id);
 
-
-            if (UserEntity == null)
+            var result = _userRepository.DeleteUser(id);
+            if (result)
+            {
+                response.Status = Status.Success;
+                response.Message = "User deleted successfully.";
+            }
+            else
             {
                 response.Status = Status.Error;
                 response.Message = "User not found.";
-                return NotFound();
+                //return NotFound();
             }
 
-            _context.Users.Remove(UserEntity);
-            await _context.SaveChangesAsync();
-
-            response.Status = Status.Success;
-            response.Message = "User deleted successfully.";
-
             return response;
-
-        }
-
-        private bool UserExists(int id)
-        {
-            return _context.Users.Any(e => e.Id == id);
         }
     }
 }

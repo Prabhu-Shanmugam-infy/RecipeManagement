@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using AutoMapper;
-using Elfie.Serialization;
-using Humanizer.Localisation;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using RecipeManagement.Contracts;
 using RecipeManagement.Entities;
+using RecipeManagement.Interface;
 using RecipeManagement.Models;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Net;
 
 namespace RecipeManagement.Controllers
 {
@@ -22,99 +14,78 @@ namespace RecipeManagement.Controllers
     public class RecipeController : ControllerBase
     {
         private IConfiguration _config;
-        private readonly RecipeContext _context;
+        
         private readonly IMapper _mapper;
+        private readonly IRecipeRepository _recipeRepository;
 
-        public RecipeController(IConfiguration config, RecipeContext context, IMapper mapper)
+        public RecipeController(IConfiguration config,  IMapper mapper, IRecipeRepository recipeRepository)
         {
-            _config = config;
-            _context = context;
+            _config = config;           
             _mapper = mapper;
+            _recipeRepository = recipeRepository;
         }
 
         // GET: api/Recipes
         [HttpGet]
         [Authorize(Roles = "User,Admin")]
-        public async Task<IEnumerable<RecipeModel>> GetRecipesAsync()
+        public List<RecipeModel> GetRecipesAsync()
         {
-           
-            var lst = await _context.Recipes
-                .Include(r => r.RecipeImages)
-                .Include(r => r.Category)
-                    .Include(r => r.Author).ToListAsync();
-            IEnumerable<RecipeModel> ilistDest = _mapper.Map<IEnumerable<Recipe>, IEnumerable<RecipeModel>>(lst);
-            return ilistDest;
+            return _recipeRepository.GetAllRecipes();
         }
 
         [HttpGet("search/{query?}")]
         [Authorize(Roles = "User,Admin")]
         public async Task<IEnumerable<RecipeModel>> SearchRecipesAsync(string? query)
         {
-            var lst = new List<Recipe>();
-            if (string.IsNullOrWhiteSpace(query))
+            var result = _recipeRepository.GetAllRecipes().Where(r => r.Active == true);
+            if (!string.IsNullOrWhiteSpace(query))
             {
-                lst = await _context.Recipes
-                    .Include(r => r.RecipeImages)
-                    .Include(r => r.Author)
-                    .Include(r => r.Category)
-                    .Where(r => r.Active == 1).ToListAsync();
-            }
-            else
-            {
-                lst = await _context.Recipes
-                     .Include(r => r.RecipeImages)
-                     .Include(r => r.Author)
-                     .Include(r => r.Category)
-                    .Where(r => r.Active == 1 && (r.Ingredients.ToLower().Contains(query.ToLower())
-              || r.Title.ToLower().Contains(query.ToLower())
-              || r.Instructions.ToLower().Contains(query.ToLower()))).ToListAsync();
+                result = result.Where(r => r.Ingredients.ToLower().Contains(query.ToLower())
+                || r.Title.ToLower().Contains(query.ToLower())
+                || r.Instructions.ToLower().Contains(query.ToLower())).ToList();
             }
 
-            IEnumerable<RecipeModel> ilistDest = _mapper.Map<IEnumerable<Recipe>, IEnumerable<RecipeModel>>(lst);
-            return ilistDest;
+            return result;
         }
 
         [HttpPost("filter")]
         [Authorize(Roles = "User,Admin")]
         public async Task<IEnumerable<RecipeModel>> FilerRecipesAsync(FilterModel? filter)
         {
-            IQueryable<Recipe> lst = _context.Recipes
-                    .Include(r => r.RecipeImages)
-                    .Include(r => r.Author)
-                    .Include(r => r.Category);
+            var result = _recipeRepository.GetAllRecipes().Where(r => r.Active == true);
             if (!string.IsNullOrWhiteSpace(filter.Ingredients))
             {
-                lst = lst.Where(r => r.Active == 1 && r.Ingredients.Contains(filter.Ingredients));
+                result = result.Where(r => r.Ingredients.Contains(filter.Ingredients));
             }
+
             if (filter.CategoryId != null)
             {
-                lst = lst.Where(r => r.CategoryId == filter.CategoryId);
+                result = result.Where(r => r.CategoryId == filter.CategoryId);
             }
 
             if (filter.CookingTimeInMins != null)
             {
-                lst = lst.Where(r => r.CookingTimeInMins <= filter.CookingTimeInMins);
+                result = result.Where(r => r.CookingTimeInMins <= filter.CookingTimeInMins);
             }
-            var lstResult = await lst.ToListAsync();
-            IEnumerable<RecipeModel> ilistDest = _mapper.Map<IEnumerable<Recipe>, IEnumerable<RecipeModel>>(lstResult);
-            return ilistDest;
+
+
+            return result;
         }
 
         // GET: api/Recipe/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<RecipeModel>> GetRecipe(int id)
+        public ActionResult<RecipeModel> GetRecipe(int id)
         {
-            var recipe = await _context.Recipes
-                .Include(r => r.RecipeImages)
-                   .Include(r => r.Author)
-                   .Include(r => r.Category).Where(r => r.Id == id).FirstOrDefaultAsync();
+            var recipe = _recipeRepository.GetRecipeById(id);
 
             if (recipe == null)
             {
                 return NotFound();
             }
-            var recipeModel = _mapper.Map<Recipe, RecipeModel>(recipe);
-            return recipeModel;
+            else
+            {
+                return recipe;
+            }
         }
 
         // PUT: api/Recipe/5
@@ -125,41 +96,16 @@ namespace RecipeManagement.Controllers
             var userId = int.Parse(User.FindFirst("UserId")?.Value);
             var IsAdmin = User.IsInRole("Admin");
 
-            var recipe = _context.Recipes
-                .Include(r => r.RecipeImages)
-                    .Include(r => r.Author)
-                    .Include(r => r.Category)
-                .Where(r => r.Id == recipeModel.Id).FirstOrDefault();
+            var recipe = _recipeRepository.GetRecipeById(id);
+
+            if (recipe == null)
+            {
+                return NotFound();
+            }
 
             if (IsAdmin || recipe.AuthorId == userId)
             {
-
-                recipe.Title = recipeModel.Title;
-                recipe.CookingTimeInMins = recipeModel.CookingTimeInMins;
-                recipe.CategoryId = recipeModel.CategoryId;
-                recipe.Ingredients = recipeModel.Ingredients;
-                recipe.Instructions = recipeModel.Instructions;
-
-                //Remove Deleted
-                var toremove = recipe.RecipeImages.Where(i => !recipeModel.RecipeImages.Contains(i.Path)).ToList();
-                var alreadyExisting = recipe.RecipeImages.Where(i => recipeModel.RecipeImages.Contains(i.Path)).Select(i => i.Path).ToList();
-                var toadd = recipeModel.RecipeImages.Except(alreadyExisting);
-                foreach (var img in toremove)
-                {
-                    _context.Entry(img).State = EntityState.Deleted;
-                    recipe.RecipeImages.Remove(img);
-
-                }
-
-                foreach (var img in toadd)
-                {
-                    var recipeimage = new RecipeImage() { Recipe = recipe, Path = img };
-                    recipe.RecipeImages.Add(recipeimage);
-                }
-
-                _context.Entry(recipe).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-
+                _recipeRepository.UpdateRecipe(recipeModel);
                 return recipeModel;
             }
             else
@@ -173,30 +119,20 @@ namespace RecipeManagement.Controllers
         [HttpPost]
         public async Task<ActionResult<Recipe>> PostRecipe(RecipeModel recipeModel)
         {
-            var recipe = new Recipe();
-            recipe.Active = 1;
-            recipe.Title = recipeModel.Title;
-            recipe.AuthorId = int.Parse(User.FindFirst("UserId")?.Value);
-            recipe.CookingTimeInMins = recipeModel.CookingTimeInMins;
-            recipe.CategoryId = recipeModel.CategoryId;
-            recipe.Ingredients = recipeModel.Ingredients;
-            recipe.Instructions = recipeModel.Instructions;
-            recipe.RecipeImages = recipeModel.RecipeImages.Select(i => new RecipeImage() { Recipe = recipe, Path = i }).ToList();
-            _context.Recipes.Add(recipe);
-            await _context.SaveChangesAsync();
+            recipeModel.AuthorId = int.Parse(User.FindFirst("UserId")?.Value);
 
-            return CreatedAtAction("GetRecipe", new { id = recipe.Id }, recipeModel);
+            var result = _recipeRepository.AddRecipe(recipeModel);
+
+            return CreatedAtAction("GetRecipe", new { id = result.Id }, recipeModel);
         }
 
         // DELETE: api/Recipe/5
         [HttpDelete("{id}")]
-        public async Task<ActionResult<BaseResponse>> DeleteRecipe(int id)
+        public ActionResult<BaseResponse> DeleteRecipe(int id)
         {
             var response = new BaseResponse();
-            var recipe = _context.Recipes
-                .Include(r => r.RecipeImages)
-                    .Include(r => r.Author).Where(r => r.Id == id).FirstOrDefault();
-            
+            var recipe = _recipeRepository.GetRecipeById(id);
+
             if (recipe == null)
             {
                 response.Status = Status.Error;
@@ -207,14 +143,6 @@ namespace RecipeManagement.Controllers
             var IsAdmin = User.IsInRole("Admin");
             if (IsAdmin || recipe.AuthorId == userId)
             {
-                foreach (var img in recipe.RecipeImages)
-                {
-                    _context.Entry(img).State = EntityState.Deleted;
-                }
-
-                _context.Recipes.Remove(recipe);
-                await _context.SaveChangesAsync();
-
                 response.Status = Status.Success;
                 response.Message = "User deleted successfully.";
 
@@ -225,7 +153,5 @@ namespace RecipeManagement.Controllers
                 return StatusCode((int)HttpStatusCode.Forbidden);
             }
         }
-
-       
     }
 }

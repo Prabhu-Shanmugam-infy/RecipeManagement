@@ -17,14 +17,14 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label asp-for="filterModel.CookingTimeInMins" class="control-label"></label>
-                                        <input asp-for="filterModel.CookingTimeInMins" class="form-control" />
-                                        <span asp-validation-for="filterModel.CookingTimeInMins" class="text-danger"></span>
+                                        <input asp-for="filterModel.CookingTimeInMins" class="form-control" value="" />
+                                        <span asp-validation-for="filterModel.CookingTimeInMins"  class="text-danger"></span>
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label asp-for="filterModel.CategoryId" class="control-label"></label>
-                                        <select asp-for="filterModel.CategoryId" class="form-select" asp-items="ViewBag.CategoryId">
+                                        <select asp-for="filterModel.CategoryId" class="form-select" value="" asp-items="ViewBag.CategoryId">
                                             <option value="">Select a Category</option>
                                         </select>
                                         <span asp-validation-for="filterModel.CategoryId" class="text-danger"></span>
@@ -33,7 +33,7 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label asp-for="filterModel.Ingredients" class="control-label"></label>
-                                        <input asp-for="filterModel.Ingredients" class="form-control" />
+                                        <input asp-for="filterModel.Ingredients" class="form-control" value="" />
                                         <span asp-validation-for="filterModel.Ingredients" class="text-danger"></span>
                                     </div>
                                 </div>

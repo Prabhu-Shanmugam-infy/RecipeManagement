@@ -84,6 +84,7 @@ namespace RecipeManagement.Web.Pages.Recipe
                     recipeModel.RecipeImages.Remove(img);
                 }
             }
+            
             await _service.UpdateRecipeAsync(recipeModel); ;
 
             return RedirectToPage("./Index");

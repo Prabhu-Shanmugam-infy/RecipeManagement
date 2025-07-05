@@ -1,16 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using RecipeManagement.Contracts;
-using RecipeManagement.Entities;
+using RecipeManagement.Interface;
 using RecipeManagement.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RecipeManagement.Controllers
 {
@@ -18,31 +15,32 @@ namespace RecipeManagement.Controllers
     [ApiController]
     public class LoginController : ControllerBase
     {
-        private IConfiguration _config;
-        private readonly RecipeContext _context;
+        private IConfiguration _config;        
         private readonly IMapper _mapper;
+        private readonly IUserRepository _userRepository;
 
-        public LoginController(IConfiguration config, RecipeContext context, IMapper mapper)
+        public LoginController(IConfiguration config,  IMapper mapper, IUserRepository userRepository)
         {
-            _config = config;
-            _context = context;
+            _config = config;            
             _mapper = mapper;
+            _userRepository = userRepository;
         }
 
         [AllowAnonymous]
         [HttpPost]
         public IActionResult Login([FromBody] Contracts.LoginRequest data)
         {
-            IActionResult response = Unauthorized();
-            var user = AuthenticateUser(data);
+            var user = _userRepository.ValidateLogin(data.Email, data.Password);
 
             if (user != null)
             {
                 var tokenString = GenerateJSONWebToken(user);
-                response = Ok(new LoginResponse() { Token = tokenString });
+                return Ok(new LoginResponse() { Token = tokenString });
             }
-
-            return response;
+            else
+            {
+                return Unauthorized();
+            }
         }
         private string GenerateJSONWebToken(UserModel userInfo)
         {
@@ -52,7 +50,7 @@ namespace RecipeManagement.Controllers
             var claims = new[] {
                 new Claim(JwtRegisteredClaimNames.Sub, userInfo.UserName),
                 new Claim(JwtRegisteredClaimNames.Email, userInfo.Email),
-                new Claim("UserId", userInfo.Id.ToString()),                
+                new Claim("UserId", userInfo.Id.ToString()),
                  new Claim(ClaimTypes.Role, userInfo.IsAdmin ? "Admin" : "User"),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
@@ -64,20 +62,6 @@ namespace RecipeManagement.Controllers
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        private UserModel AuthenticateUser(Contracts.LoginRequest data)
-        {
-            var user = _context.Users.Where(u => u.IsActive == 1 &&  u.Email == data.Email && u.PasswordHash == MD5Helper.GetMd5Hash(data.Password)).FirstOrDefault();
-
-            if (user != null)
-            {
-                var userModel = _mapper.Map<UserModel>(user);
-                return userModel;
-            }
-            else { return null; }
-
-
         }
     }
 }
